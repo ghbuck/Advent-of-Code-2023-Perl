@@ -13,4 +13,4 @@ BEGIN {
 use Advent::Common;
 use Advent::Days;
 
-Advent::Days->run(4, Advent::Common->getArgs(@ARGV));
+Advent::Days->run(Advent::Common->getArgs(@ARGV));
