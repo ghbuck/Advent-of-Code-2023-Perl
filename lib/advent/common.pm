@@ -6,39 +6,42 @@ use strict;
 use Data::Dumper;
 use FindBin qw($Bin);
 
-use Exporter 'import';
-our @EXPORT = qw/getArgs getLines/;
-
 sub getArgs {
-    my ($dayNum, $questionNum, $doExample) = (undef, 1, 0);
+    my $runConfig = {
+        dayNum => undef,
+        questionNum => 1,
+        doExample => 0,
+        validate => 0
+    };
 
     foreach my $arg (@_) {
         for ($arg) {
-            if    (/-q:([1-2])/)          { $questionNum = int($1); }
-            elsif (/-e/)                  { $doExample = 1; }
-            elsif (/-d:(\d+)/)            { $dayNum = int($1); }
+            if    (/-v/)                  { $runConfig->{validate} = 1; }
+            elsif (/-e/)                  { $runConfig->{doExample} = 1; }
+            elsif (/-q:([1-2])/)          { $runConfig->{questionNum} = int($1); }
+            elsif (/-d:(\d+)/)            { $runConfig->{dayNum} = int($1); }
             elsif (/^< (.+?\/stdin.txt)/) {
                 if (open my $handle, '<', $1) {
                     chomp(my @lines = <$handle>);
                     close $handle;
 
                     $lines[0] =~ m/-d:(\d+)/;
-                    $dayNum = int($1);
+                    $runConfig->{dayNum} = int($1);
                 }
             }
         }
     }
 
-    die "dayNum not defined" if not defined $dayNum;
+    die "dayNum not defined" if not $runConfig->{validate} and not defined $runConfig->{dayNum};
 
-    return ($dayNum, $questionNum, $doExample);
+    return $runConfig;
 }
 
 sub getLines {
-    my ($dayNum, $questionNum, $doExample) = @_;
+    my ($self, $runConfig) = @_;
 
-    my $base = "$Bin/sources/day$dayNum";
-    my $file = $doExample ? "example$questionNum.txt" : 'input.txt';
+    my $base = "$Bin/sources/day$runConfig->{dayNum}";
+    my $file = $runConfig->{doExample} ? "example$runConfig->{questionNum}.txt" : 'input.txt';
     my $path = "$base/$file";
 
     my @lines;

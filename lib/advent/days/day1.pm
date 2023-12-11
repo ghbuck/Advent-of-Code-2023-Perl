@@ -5,11 +5,9 @@ use warnings;
 use strict;
 use Data::Dumper;
 
-use Advent::Common;
-
 sub runDay {
-    my ($self, $questionNum, $doExample) = @_;
-    my $lines = getLines(1, $questionNum, $doExample);
+    my ($self, $runConfig) = @_;
+    my $lines = Advent::Common->getLines($runConfig);
 
     my $hash = {};
     my $hashIndex = 0;
@@ -18,7 +16,7 @@ sub runDay {
     foreach my $word (@words) {
         $hash->{$hashIndex} = $hashIndex;
 
-        if (defined $questionNum and $questionNum == 2) {
+        if (defined $runConfig->{questionNum} and $runConfig->{questionNum} == 2) {
             $hash->{$word} = $hashIndex;
         }
 
@@ -38,7 +36,7 @@ sub runDay {
         $total += "$hash->{$num1}$hash->{$num2}";
     }
 
-    say "\ntotal: " . $total . "\n";
+    return $total;
 }
 
 1;

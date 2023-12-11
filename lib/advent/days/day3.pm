@@ -5,11 +5,9 @@ use warnings;
 use strict;
 use Data::Dumper;
 
-use Advent::Common;
-
 sub runDay {
-    my ($self, $questionNum, $doExample) = @_;
-    my $lines = getLines(3, $questionNum, $doExample);
+    my ($self, $runConfig) = @_;
+    my $lines = Advent::Common->getLines($runConfig);
 
     # declare the total
     my $total = 0;
@@ -42,12 +40,12 @@ sub runDay {
     }
 
     # process the questions
-    for ($questionNum) {
+    for ($runConfig->{questionNum}) {
         if    (/1/) { processQuestionOne($lines, $numMatrix, $symbolMatrix, \$total) }
         elsif (/2/) { processQuestionTwo($lines, $numMatrix, $symbolMatrix, \$total) }
     }
 
-    say "\ntotal: $total\n";
+    return $total;
 }
 
 sub processQuestionOne {

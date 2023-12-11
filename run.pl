@@ -13,4 +13,6 @@ BEGIN {
 use Advent::Common;
 use Advent::Days;
 
-Advent::Days->run(Advent::Common->getArgs(@ARGV));
+my $runConfig = Advent::Common->getArgs(@ARGV);
+
+Advent::Days->run($runConfig);

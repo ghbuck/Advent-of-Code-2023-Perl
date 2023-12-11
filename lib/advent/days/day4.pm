@@ -6,11 +6,9 @@ use strict;
 use Data::Dumper;
 use List::Util qw(sum0);
 
-use Advent::Common;
-
 sub runDay {
-    my ($self, $questionNum, $doExample) = @_;
-    my $lines = getLines(4, $questionNum, $doExample);
+    my ($self, $runConfig) = @_;
+    my $lines = Advent::Common->getLines($runConfig);
 
     my $total = 0;
 
@@ -26,15 +24,15 @@ sub runDay {
             my %winningNums = map { $_, 1 } split(' ', $winningNums);
             my @nums = split(' ', $nums);
 
-            processCard(\$questionNum, \$numLines, \$id, \%winningNums, \@nums, \@numCardsData, \$total);
+            processCard(\$runConfig->{questionNum}, \$numLines, \$id, \%winningNums, \@nums, \@numCardsData, \$total);
         }
     }
 
-    if ($questionNum == 2) {
+    if ($runConfig->{questionNum} == 2) {
         $total = sum0(@numCardsData);
     }
 
-    say "\n total: $total\n";
+    return $total;
 }
 
 sub processCard {

@@ -5,11 +5,9 @@ use warnings;
 use strict;
 use Data::Dumper;
 
-use Advent::Common;
-
 sub runDay {
-    my ($self, $questionNum, $doExample) = @_;
-    my $lines = getLines(2, $questionNum, $doExample);
+    my ($self, $runConfig) = @_;
+    my $lines = Advent::Common->getLines($runConfig);
 
     my $total = 0;
     my $maxCubes = {
@@ -38,36 +36,39 @@ sub runDay {
                     blue => 0
                 };
 
-                $round =~ s/(\d+) (red|green|blue)/
-                    my ($value, $key) = (int($1), $2);
+                my @cubes = split(/, */, $round);
+                foreach my $cubeData (@cubes) {
+                    my ($value, $key) = ($1, $2) if $cubeData =~ m/(\d+) (red|green|blue)/;
 
-                    for ($questionNum) {
-                        if    ({1}) { $roundCubes->{$key} = $value; }
-                        elsif ({2}) {
-                            my $maxValue = int($gameCubes->{$key});
+                    if (defined $value and defined $key) {
+                        for ($runConfig->{questionNum}) {
+                            if    (/1/) { $roundCubes->{$key} = $value; }
+                            elsif (/2/) {
+                                my $maxValue = int($gameCubes->{$key});
 
-                            if ($value > $maxValue) {
-                                $gameCubes->{$key} = $value;
+                                if ($value > $maxValue) {
+                                    $gameCubes->{$key} = $value;
+                                }
                             }
                         }
                     }
-                /eg;
+                }
 
-                if ($questionNum == 1) {
+                if ($runConfig->{questionNum} == 1) {
                     $gameIsPossible = (($roundCubes->{red} <= $maxCubes->{red}) and ($roundCubes->{green} <= $maxCubes->{green}) and ($roundCubes->{blue} <= $maxCubes->{blue}));
                     last if not $gameIsPossible;
                 }
             }
         }
 
-        if ($questionNum == 1 and $gameIsPossible) {
+        if ($runConfig->{questionNum} == 1 and $gameIsPossible) {
             $total += $gameId;
-        } elsif ($questionNum == 2) {
+        } elsif ($runConfig->{questionNum} == 2) {
             $total += $gameCubes->{red} * $gameCubes->{green} * $gameCubes->{blue}
         }
     }
 
-    say "\n total: $total\n";
+    return $total;
 }
 
 1;
