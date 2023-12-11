@@ -9,7 +9,7 @@ use Exporter 'import';
 our @EXPORT = qw/getArgs getLines/;
 
 sub getArgs {
-    my ($questionNum, $doExample) = (1, 0);
+    my ($self, $questionNum, $doExample) = (1, 0);
 
     foreach my $arg (@_) {
         if ($arg eq '-e') {

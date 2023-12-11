@@ -3,12 +3,7 @@ package Advent::Days::Day2;
 use v5.38.2;
 use warnings;
 use strict;
-use feature qw(switch);
-    no warnings 'experimental';
 use Data::Dumper;
-
-use FindBin qw($Bin);
-use lib "$Bin/lib";
 
 use Advent::Common;
 
@@ -46,9 +41,9 @@ sub runDay {
                 $round =~ s/(\d+) (red|green|blue)/
                     my ($value, $key) = (int($1), $2);
 
-                    given ($questionNum) {
-                        when (1) { $roundCubes->{$key} = $value; }
-                        when (2) {
+                    for ($questionNum) {
+                        if    ({1}) { $roundCubes->{$key} = $value; }
+                        elsif ({2}) {
                             my $maxValue = int($gameCubes->{$key});
 
                             if ($value > $maxValue) {

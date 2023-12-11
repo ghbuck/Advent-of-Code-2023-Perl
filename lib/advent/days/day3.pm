@@ -3,12 +3,7 @@ package Advent::Days::Day3;
 use v5.38.2;
 use warnings;
 use strict;
-use feature qw(switch);
-    no warnings 'experimental';
 use Data::Dumper;
-
-use FindBin qw($Bin);
-use lib "$Bin/lib";
 
 use Advent::Common;
 
@@ -47,9 +42,9 @@ sub runDay {
     }
 
     # process the questions
-    given ($questionNum) {
-        when (1) { processQuestionOne($lines, $numMatrix, $symbolMatrix, \$total) }
-        when (2) { processQuestionTwo($lines, $numMatrix, $symbolMatrix, \$total) }
+    for ($questionNum) {
+        if    (/1/) { processQuestionOne($lines, $numMatrix, $symbolMatrix, \$total) }
+        elsif (/2/) { processQuestionTwo($lines, $numMatrix, $symbolMatrix, \$total) }
     }
 
     say "\ntotal: $total\n";
