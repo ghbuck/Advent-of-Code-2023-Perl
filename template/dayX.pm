@@ -5,9 +5,11 @@ use warnings;
 use strict;
 use Data::Dumper;
 
-use Advent::Common;
-
 sub runDay {
-    my ($self, $questionNum, $doExample) = @_;
-    my $lines = getLines(0, $questionNum, $doExample);
+    my ($self, $runConfig) = @_;
+    my $lines = Advent::Common->getLines($runConfig);
+
+    my $total = 0;
+
+    return $total;
 }
