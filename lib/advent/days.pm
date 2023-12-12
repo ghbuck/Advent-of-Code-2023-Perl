@@ -14,7 +14,7 @@ sub run {
     my ($self, $runConfig) = @_;
 
     if ($runConfig->{validate}) {
-        runValidation()
+        runValidation($runConfig);
     } else {
         my $module = "Advent::Days::Day$runConfig->{dayNum}";
         load $module;
@@ -26,6 +26,8 @@ sub run {
 }
 
 sub runValidation {
+    my ($runConfig) = @_;
+
     my $answersPath = "$Bin/sources/validations.txt";
 
     # read answers file
@@ -37,16 +39,25 @@ sub runValidation {
         die "$answersPath not found";
     }
 
+    # set day(s) and question(s) to validate
+    my $hasDayConfig = defined $runConfig->{dayNum};
+    my $hasQuestionConfig = defined $runConfig->{questionNum};
+    my $dayConfig = {
+        startIndex => $hasDayConfig ? $runConfig->{dayNum} : 1,
+        endIndex => $hasDayConfig ? $runConfig->{dayNum} : scalar @allAnswers - 1,
+        questions => $hasQuestionConfig ? [$runConfig->{questionNum}] : [1, 2]
+    };
+
     # validate the day
     # $answers[0] is a header
-    for (my $dayIndex = 1; $dayIndex < scalar @allAnswers; ++$dayIndex) {
+    for (my $dayIndex = $dayConfig->{startIndex}; $dayIndex <= $dayConfig->{endIndex} ; ++$dayIndex) {
         my @dayAnswers = split(' ', $allAnswers[$dayIndex]);
 
-        foreach my $questionNum (1, 2) {
+        foreach my $questionNum (@{$dayConfig->{questions}}) {
             my $index = $questionNum - 1;
 
             my $answer = $dayAnswers[$index];
-            my $runConfig = {
+            my $validationConfig = {
                 dayNum => $dayIndex,
                 questionNum => $questionNum,
                 doExample => 0,
@@ -57,7 +68,7 @@ sub runValidation {
             load $module;
 
             say colored("\nValidating Day $dayIndex - Question $questionNum", 'green');
-            my $return = $module->runDay($runConfig);
+            my $return = $module->runDay($validationConfig);
 
             if ($return eq $answer) {
                 say colored("\nSuccessful validation", 'blue');

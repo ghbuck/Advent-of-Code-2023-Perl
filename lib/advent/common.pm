@@ -9,7 +9,7 @@ use FindBin qw($Bin);
 sub getArgs {
     my $runConfig = {
         dayNum => undef,
-        questionNum => 1,
+        questionNum => undef,
         doExample => 0,
         validate => 0
     };
@@ -33,6 +33,7 @@ sub getArgs {
     }
 
     die "dayNum not defined" if not $runConfig->{validate} and not defined $runConfig->{dayNum};
+    die "questionNum not defined" if not $runConfig->{validate} and not defined $runConfig->{questionNum};
 
     return $runConfig;
 }
