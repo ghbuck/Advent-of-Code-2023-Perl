@@ -13,3 +13,5 @@ sub runDay {
 
     return $total;
 }
+
+1;
