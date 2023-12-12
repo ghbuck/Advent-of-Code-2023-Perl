@@ -19,9 +19,9 @@ sub run {
         my $module = "Advent::Days::Day$runConfig->{dayNum}";
         load $module;
 
-        my $returnTotal = $module->runDay($runConfig);
+        my $output = $module->runDay($runConfig);
 
-        say "\ntotal: " . $returnTotal . "\n";
+        say "\noutput: " . $output . "\n";
     }
 }
 
