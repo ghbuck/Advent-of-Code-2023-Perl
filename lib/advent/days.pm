@@ -57,6 +57,9 @@ sub runValidation {
             my $index = $questionNum - 1;
 
             my $answer = $dayAnswers[$index];
+
+            next if not defined $answer or $answer eq '';
+
             my $validationConfig = {
                 dayNum => $dayIndex,
                 questionNum => $questionNum,
