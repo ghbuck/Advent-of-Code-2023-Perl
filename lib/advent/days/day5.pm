@@ -4,7 +4,9 @@ use v5.38.2;
 use warnings;
 use strict;
 use Scalar::Util qw(looks_like_number);
-# use Term::ANSIColor;
+use Term::ANSIColor;
+
+use Data::Dumper;
 
 sub runDay {
     my ($self, $runConfig) = @_;
@@ -14,35 +16,14 @@ sub runDay {
     # biiiiiiiig assumption = no overlapping ranges in each map type
     my $mapArray = createMapArray($lines);
 
-    # collect the seeds
-    my @seeds = ();
-    for ($runConfig->{questionNum}) {
-        if    (/1/) { @seeds = sort {$a <=> $b} split(' ', substr($lines->[0], 7)); }
-        elsif (/2/) {
-            my @seedData = sort { ($a =~ /^(\d+)/)[0] <=> ($b =~ /^(\d+)/)[0] } substr($lines->[0], 7) =~ m/(\d+ \d+)/g;
-            foreach my $data (@seedData) {
-                my @dataParts = split(' ', $data);
-                push(@seeds, ($dataParts[0]..($dataParts[0] + $dataParts[1])));
-            }
-        }
-    }
-
-    # get the locations
+    # run question one
     my $lowestLocation;
-    for (my $seedIndex = 0; $seedIndex < scalar @seeds; ++$seedIndex) {
-        my $seedLocation = undef;
-        my $seed = $seeds[$seedIndex];
-
-        processItem(\$seed, 0, $mapArray, \$seedLocation);
-
-        die "no location found for seed $seed" if not defined $seedLocation;
-
-        if (not defined $lowestLocation or bitCompare($lowestLocation, $seedLocation)) {
-            $lowestLocation = $seedLocation;
-        };
+    for ($runConfig->{questionNum}) {
+        if    (/1/) { $lowestLocation = processQuestionOne($lines, $mapArray); }
+        elsif (/2/) { $lowestLocation = processQuestionTwo($lines, $mapArray); }
     }
 
-    return $lowestLocation;
+    return $lowestLocation ? $lowestLocation : "no total returned";
 }
 
 sub createMapArray {
@@ -62,31 +43,38 @@ sub createMapArray {
     my $mapArray = [
         {
             sortedKeys => [],
-            map => $seedSoilMap
+            map => $seedSoilMap,
+            name => 'seedSoil'
         },
         {
             sortedKeys => [],
-            map => $soilFertilizerMap
+            map => $soilFertilizerMap,
+            name => 'soilFertilizer'
         },
         {
             sortedKeys => [],
-            map => $fertilizerWaterMap
+            map => $fertilizerWaterMap,
+            name => 'fertilizerWater'
         },
         {
             sortedKeys => [],
-            map => $waterLightMap
+            map => $waterLightMap,
+            name => 'waterLight'
         },
         {
             sortedKeys => [],
-            map => $lightTempMap
+            map => $lightTempMap,
+            name => 'lightTemp'
         },
         {
             sortedKeys => [],
-            map => $tempHumidityMap
+            map => $tempHumidityMap,
+            name => 'tempHumidity'
         },
         {
             sortedKeys => [],
-            map => $humidityLocationMap
+            map => $humidityLocationMap,
+            name => 'humidityLocation'
         }
     ];
 
@@ -124,19 +112,44 @@ sub createMapArray {
     return $mapArray;
 }
 
-sub processItem {
-    my ($source, $mapArrayIndex, $mapArray, $seedLocation) = @_;
+sub processQuestionOne {
+    my ($lines, $mapArray) = @_;
 
-    # say colored("map #$mapArrayIndex", 'blue');
+    # get seeds
+    my @seeds = sort {$a <=> $b} split(' ', substr($lines->[0], 7));
+
+    # get the locations
+    my $lowestLocation;
+    my $numSeeds = scalar @seeds;
+
+    for (my $seedIndex = 0; $seedIndex < $numSeeds; ++$seedIndex) {
+        my $seedLocation = undef;
+        my $seed = $seeds[$seedIndex];
+
+        processSeedsToLocation(\$seed, 0, $mapArray, \$seedLocation);
+
+        die colored("\nno location found for seed $seed\n", 'red') if not defined $seedLocation;
+
+        if (not defined $lowestLocation or a_greater_b(\$lowestLocation, \$seedLocation)) {
+            $lowestLocation = $seedLocation;
+        };
+    }
+
+    return $lowestLocation;
+}
+
+sub processSeedsToLocation {
+    my ($source, $mapArrayIndex, $mapArray, $seedLocation) = @_;
 
     # get the meta items
     my $mapArrayItem = $mapArray->[$mapArrayIndex];
-    my $isLocation = $mapArrayIndex == (scalar @$mapArray - 1);
+    my $isLocation = $mapArrayItem->{name} eq 'humidityLocation';
 
     # find the right map key, where
     # (sortedKeys[$keyIndex] + range) < $source < ($sortedKeys[$keyIndex + 1])
     my $destination = undef;
     my $maxKeyIndex = scalar @{$mapArrayItem->{sortedKeys}} - 1;
+    my %hashedKeys = map { $_, 1 } @{$mapArrayItem->{sortedKeys}};
 
     for (my $keyIndex = 0; (not defined $destination) and ($keyIndex <= $maxKeyIndex); ++$keyIndex) {
         my $key = $mapArrayItem->{sortedKeys}->[$keyIndex];
@@ -145,7 +158,7 @@ sub processItem {
         my $range = $map->{range};
         my $maxSource = $key + $range;
 
-        if (bitCompare($$source, $key) and bitCompare($maxSource, $$source)) {
+        if (a_greaterOrEqual_b($source, \$key) and a_greaterOrEqual_b(\$maxSource, $source)) {
             $destination = $map->{destination} + ($$source - $key);
             last;
         }
@@ -157,17 +170,136 @@ sub processItem {
     }
 
     if (not $isLocation) {
-        processItem(\$destination, $mapArrayIndex + 1, $mapArray, $seedLocation);
+        processSeedsToLocation(\$destination, $mapArrayIndex + 1, $mapArray, $seedLocation);
     } else {
         $$seedLocation = $destination;
     }
 }
 
-# this does a bitwise operation on the huge integers
-# it returns true for $a >= $b
-sub bitCompare {
+sub processQuestionTwo {
+    my ($lines, $mapArray) = @_;
+
+    my $lowestLocation;
+
+    my $mapArrayIndex = scalar @$mapArray - 1;
+
+    # get the location data
+    my $locationMap = $mapArray->[$mapArrayIndex--];
+
+    # we need to find the location with the lowest range
+    my $locationData = findLowestLocationData($locationMap->{map});
+
+    # now let's create the range of seeds we need to process
+    my $seedRangeData = processLocationsToSeeds($locationData->{source}, $mapArray, $mapArrayIndex);
+
+    # now process the seeds
+    my @seedInfo = substr($lines->[0], 7) =~ /(\d+ \d+)/g;
+    my @sortedSeeds = sort { ($a =~ /^(\d+)/)[0] <=> ($b =~ /^(\d+)/)[0]} @seedInfo;
+
+    my @filteredSeeds;
+    foreach my $seedData (@sortedSeeds) {
+        my ($start, $range) = split(' ', $seedData);
+        my $end = $start + ($range - 1);
+
+        if (a_greaterOrEqual_b(\$start, \$seedRangeData->{start}) and a_greaterOrEqual_b(\$seedRangeData->{end}, \$end)) {
+            push(@filteredSeeds, {
+                start => $start,
+                end => $end
+            })
+        }
+    }
+
+    my $numSeeds = 0;
+    foreach my $seed (@filteredSeeds) {
+        $numSeeds += $seed->{end} - $seed->{start};
+    }
+
+    say Dumper $numSeeds;
+
+
+    return $lowestLocation;
+}
+
+sub findLowestLocationData {
+    my ($map) = @_;
+
+    my $locationData = {
+        destination => undef,
+        source => undef
+    };
+
+    while (my ($key, $value) = each %$map) {
+        my $startDestination = $value->{destination};
+        my $endDestination = $startDestination + ($value->{range} - 1);
+
+        if (not defined $locationData->{destination} or a_greater_b(\$locationData->{destination}->{end}, \$endDestination)) {
+            $locationData = {
+                destination => {
+                    start => $startDestination,
+                    end => $endDestination
+                },
+                source => {
+                    start => $key,
+                    end => $key + ($value->{range} - 1)
+                }
+            };
+        }
+    }
+
+    return $locationData;
+}
+
+sub processLocationsToSeeds {
+    # destinationData = { start => int, end => int }
+    my ($destinationData, $mapArray, $mapArrayIndex) = @_;
+
+    # get the meta items
+    my $mapArrayItem = $mapArray->[$mapArrayIndex--];
+
+    my $map = $mapArrayItem->{map};
+    my $isSeeds = $mapArrayItem->{name} eq 'seedSoil';
+
+    my $sourceData = {
+        start => undef,
+        end => undef
+    };
+
+    my @sortedMapItems = sort { $a->{destination} <=> $b->{destination} } values %$map;
+
+    for (my $index = 0; $index < scalar @sortedMapItems; ++$index) {
+        my $value = $sortedMapItems[$index];
+
+        my $startDestination = $value->{destination};
+        my $endDestination = $startDestination + ($value->{range} - 1);
+
+        if (not defined $sourceData->{start} or a_greater_b(\$destinationData->{start}, \$startDestination)) {
+            $sourceData->{start} = $startDestination;
+        }
+
+        if (not defined $sourceData->{end} or a_greater_b(\$endDestination, \$destinationData->{end})) {
+            $sourceData->{end} = $endDestination;
+        }
+    }
+
+    my $seedData;
+    if (not $isSeeds) {
+        $seedData = processLocationsToSeeds($sourceData, $mapArray, $mapArrayIndex, $seedData)
+    } else {
+        $seedData = $sourceData;
+    }
+
+    return $seedData;
+}
+
+# do bitwise operations on the huge integers
+sub a_greaterOrEqual_b {
     my ($a, $b) = @_;
-    return ( ($a - $b) >> 63 ) ? 0 : 1;
+    return ( ($$a - $$b) >> 63 ) ? 0 : 1;
+}
+
+sub a_greater_b {
+    my ($a, $b) = @_;
+    return (($$b - $$a) >> 63);
 }
 
 1;
