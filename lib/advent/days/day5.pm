@@ -3,10 +3,8 @@ package Advent::Days::Day5;
 use v5.38.2;
 use warnings;
 use strict;
-use Data::Dumper;
-use Math::BigInt;
 use Scalar::Util qw(looks_like_number);
-use Term::ANSIColor;
+# use Term::ANSIColor;
 
 sub runDay {
     my ($self, $runConfig) = @_;

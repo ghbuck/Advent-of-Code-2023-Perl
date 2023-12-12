@@ -3,7 +3,6 @@ package Advent::Common;
 use v5.38.2;
 use warnings;
 use strict;
-use Data::Dumper;
 use FindBin qw($Bin);
 
 sub getArgs {

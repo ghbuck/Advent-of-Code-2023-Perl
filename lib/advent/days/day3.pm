@@ -3,7 +3,6 @@ package Advent::Days::Day3;
 use v5.38.2;
 use warnings;
 use strict;
-use Data::Dumper;
 use Scalar::Util qw(looks_like_number);
 
 sub runDay {

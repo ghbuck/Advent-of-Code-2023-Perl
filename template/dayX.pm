@@ -3,7 +3,6 @@ package Advent::Days::Day0;
 use v5.38.2;
 use warnings;
 use strict;
-use Data::Dumper;
 
 sub runDay {
     my ($self, $runConfig) = @_;
