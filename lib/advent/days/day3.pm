@@ -4,6 +4,7 @@ use v5.38.2;
 use warnings;
 use strict;
 use Data::Dumper;
+use Scalar::Util qw(looks_like_number);
 
 sub runDay {
     my ($self, $runConfig) = @_;
@@ -30,8 +31,11 @@ sub runDay {
         for (my $lineIndex = 0; $lineIndex < scalar @line; ++$lineIndex) {
             my $char = $line[$lineIndex];
 
-            $lineNumMatrix->{$lineIndex} = $char =~ m/([0-9])/ ? 1 : 0;
-            $lineSymbolMatrix->{$lineIndex} = $char =~/([^.0-9])/ ? 1 : 0;
+            my $isANumber = looks_like_number($char);
+            my $isASymbol = ((not $isANumber) and ($char ne '.'));
+
+            $lineNumMatrix->{$lineIndex} = $isANumber;
+            $lineSymbolMatrix->{$lineIndex} = $isASymbol;
         }
 
         # place the line level data into the file level hashes
